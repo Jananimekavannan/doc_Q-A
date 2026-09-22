@@ -1,7 +1,7 @@
 /* ==========================================================================
    DocuMind — AI Document Q&A
-   Exact Mascot Composition Matching User Reference Image
-   (Robot size matching the box size, preserving dark navy colors)
+   Perfect Centering for Viewport, Board, and Robot Mascot
+   (Preserving all existing dark navy colors, gradients, and styling)
    ========================================================================== */
 
 :root {
@@ -52,13 +52,16 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Perfect Screen Centering */
 body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.5rem;
+  min-height: 100vh;
+  margin: 0;
+  padding: 2rem 1.5rem;
   background: 
-    radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.28) 0%, transparent 60%),
+    radial-gradient(circle at 50% 15%, rgba(37, 99, 235, 0.28) 0%, transparent 60%),
     radial-gradient(circle at 10% 88%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
     radial-gradient(circle at 90% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 45%),
     var(--bg-dark);
@@ -66,24 +69,26 @@ body {
   overflow-x: hidden;
 }
 
-/* App Wrapper */
+/* App Wrapper Centered */
 .app-container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-/* Row containing the Card (Board) and the Robot Mascot matching card height */
+/* Unified Board & Robot Row (Centered) */
 .board-and-robot-row {
   display: flex;
-  align-items: flex-end; /* Aligns bot feet with bottom level of the box */
+  align-items: center;
   justify-content: center;
   width: 100%;
+  margin: 0 auto;
   position: relative;
-  gap: 0;
 }
 
 /* ==========================================================================
@@ -91,7 +96,7 @@ body {
    ========================================================================== */
 .qa-card {
   flex: 1;
-  max-width: 760px;
+  max-width: 780px;
   background: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: 24px;
@@ -117,17 +122,17 @@ body {
 }
 
 /* ==========================================================================
-   ROBOT MASCOT (FULL-SIZE TO MATCH BOX HEIGHT)
+   ROBOT MASCOT
    ========================================================================== */
 .side-robot-wrapper {
-  flex: 0 0 380px; /* Generous width so bot matches the card scale */
+  flex: 0 0 360px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-left: -58px; /* Robot left hand grips the card's right border frame */
+  justify-content: center;
+  margin-left: -50px;
   z-index: 10;
   pointer-events: none;
-  align-self: flex-end;
   animation: robotBreathe 4.5s ease-in-out infinite;
 }
 
@@ -140,45 +145,9 @@ body {
   }
 }
 
-/* Speech Bubble above robot */
-.bot-side-speech {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 1rem;
-  background: rgba(10, 25, 48, 0.94);
-  border: 1px solid rgba(56, 189, 248, 0.45);
-  border-radius: 9999px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.25);
-  backdrop-filter: blur(12px);
-  margin-bottom: 0.4rem;
-  pointer-events: auto;
-  animation: speechFloat 3s ease-in-out infinite;
-}
-
-@keyframes speechFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-.speech-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-
-.speech-text {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #E2E8F0;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-/* Robot Vector Graphic Scaled to match the full height of the Card */
+/* Robot Vector Graphic */
 .robot-svg {
-  width: 380px;
+  width: 360px;
   height: 480px;
   max-height: 520px;
   filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
@@ -224,29 +193,15 @@ body {
 }
 
 /* ==========================================================================
-   HEADER SECTION
+   HEADER SECTION (CENTERED)
    ========================================================================== */
 .card-header {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.title-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyan-accent);
-  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
 }
 
 .card-title {
@@ -255,6 +210,7 @@ body {
   letter-spacing: -0.025em;
   color: var(--text-white);
   line-height: 1.15;
+  text-align: center;
 }
 
 .card-subtitle {
@@ -262,6 +218,7 @@ body {
   color: var(--text-muted);
   font-weight: 400;
   letter-spacing: 0.01em;
+  text-align: center;
 }
 
 /* ==========================================================================
@@ -587,12 +544,13 @@ body {
 }
 
 /* ==========================================================================
-   RESPONSIVE LAYOUT
+   RESPONSIVE LAYOUT (CENTERED)
    ========================================================================== */
 @media (max-width: 1100px) {
   .board-and-robot-row {
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 1.5rem;
   }
 
@@ -620,8 +578,8 @@ body {
   }
 
   .robot-svg {
-    width: 320px;
-    height: 400px;
+    width: 300px;
+    height: 380px;
   }
 
   .qa-card {
