@@ -124,8 +124,9 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* 🤖 Animated Robot Mascot holding the card from Top, Left, Right & Bottom */}
-      <AnimatedBot state={getBotState()}>
+      {/* Container holding the Card Board and the Robot Mascot standing beside it */}
+      <div className="board-and-robot-row">
+        {/* The Board (Q&A Card) */}
         <main className="qa-card">
           {/* 1. Header */}
           <header className="card-header">
@@ -282,7 +283,10 @@ export default function App() {
             </div>
           </section>
         </main>
-      </AnimatedBot>
+
+        {/* The Animated Robot Mascot from reference image holding and pointing at the card */}
+        <AnimatedBot state={getBotState()} />
+      </div>
     </div>
   );
 }
