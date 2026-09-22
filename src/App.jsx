@@ -1,160 +1,276 @@
 import React, { useRef, useState } from "react";
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import DocumentPanel from "./components/DocumentPanel";
-import ChatPanel from "./components/ChatPanel";
-import FeatureStrip from "./components/FeatureStrip";
-import Footer from "./components/Footer";
+import { Bot, FileText, UploadCloud, Lightbulb, Send, CheckCircle2, RotateCcw } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-function App() {
+export default function App() {
   const [file, setFile] = useState(null);
-  const [dragging, setDragging] = useState(false);
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [sources, setSources] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState("Workspace");
+  const [asking, setAsking] = useState(false);
+  const [error, setError] = useState(null);
 
-  const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-  const pickFile = (f) => {
-    if (!f) return;
-    const valid = ["application/pdf", "text/plain"];
-    if (!valid.includes(f.type) && !/\.(pdf|txt)$/i.test(f.name)) {
-      alert("Please upload a valid PDF or TXT file.");
+  // File selection
+  const handleFileChange = (e) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+
+    const validTypes = ["application/pdf", "text/plain"];
+    if (!validTypes.includes(selected.type) && !/\.(pdf|txt)$/i.test(selected.name)) {
+      alert("Please choose a valid PDF or TXT document.");
       return;
     }
-    setFile(f);
+
+    setFile(selected);
     setUploaded(false);
+    setError(null);
   };
 
-  const upload = async () => {
-    if (!file) return;
+  // Upload document
+  const handleUpload = async () => {
+    if (!file) {
+      alert("Please select a document first.");
+      return;
+    }
+
     setUploading(true);
+    setError(null);
+
     try {
-      const body = new FormData();
-      body.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
+
       const res = await fetch(`${API_BASE}/upload`, {
         method: "POST",
-        body
+        body: formData,
       });
-      if (!res.ok) throw new Error("Upload failed");
+
+      if (!res.ok) {
+        throw new Error(`Upload failed (${res.status})`);
+      }
+
       setUploaded(true);
     } catch (err) {
-      console.warn("Backend /upload not available, using client-ready state:", err);
-      // Demo-friendly fallback: keep the UI usable until backend is connected.
+      console.warn("Backend /upload notice:", err);
+      // Fallback state so user can continue testing/using the UI
       setUploaded(true);
     } finally {
       setUploading(false);
     }
   };
 
-  const ask = async (preset = null) => {
-    const q = (preset ?? question).trim();
-    if (!q || loading) return;
+  // Ask question
+  const handleAsk = async (e) => {
+    if (e) e.preventDefault();
+    const q = question.trim();
+    if (!q || asking) return;
 
-    // Add user question to messages
-    setQuestion("");
-    setMessages((prev) => [...prev, { role: "user", text: q }]);
-    setLoading(true);
+    if (!file) {
+      alert("Please choose and upload a document first.");
+      return;
+    }
+
+    setAsking(true);
+    setAnswer("");
+    setSources([]);
+    setError(null);
 
     try {
       const res = await fetch(`${API_BASE}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q })
+        body: JSON.stringify({ question: q }),
       });
 
-      if (!res.ok) throw new Error("API unavailable");
+      if (!res.ok) {
+        throw new Error(`API error (${res.status})`);
+      }
+
       const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: data.answer || "No answer returned.",
-          sources: data.sources || []
-        }
-      ]);
+      setAnswer(data.answer || "No answer returned from RAG engine.");
+      setSources(data.sources || []);
     } catch (err) {
-      console.warn("Backend /ask not available, providing helpful fallback:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: "Your backend server is not reachable yet at " + API_BASE + ". Once the FastAPI `/ask` endpoint is running, DocuMind will retrieve relevant chunks via semantic vector search and answer strictly from your uploaded document.",
-          sources: file ? [`Passage from ${file.name}: Semantic search active (Sample context)`] : []
-        }
-      ]);
+      console.warn("Backend /ask notice:", err);
+      setAnswer(
+        "Backend not reached at " + API_BASE + ". Once your FastAPI `/ask` server is online, DocuMind will retrieve relevant chunks and generate grounded answers."
+      );
+      setSources([]);
     } finally {
-      setLoading(false);
+      setAsking(false);
     }
   };
 
-  const removeDoc = () => {
-    setFile(null);
-    setUploaded(false);
-    setMessages([]);
-    if (inputRef.current) {
-      inputRef.current.value = "";
-    }
+  // Reset/clear
+  const handleClear = () => {
+    setAnswer("");
+    setSources([]);
+    setQuestion("");
+    setError(null);
   };
-
-  const resetChat = () => {
-    setMessages([]);
-  };
-
-  const navItems = ["Workspace", "Documents", "How it works"];
 
   return (
-    <div className="app-shell">
-      <Header
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-        navItems={navItems}
-        activeNav={activeNav}
-        setActiveNav={setActiveNav}
-      />
+    <div className="app-container">
+      <main className="qa-card">
+        {/* 1. Header */}
+        <header className="card-header">
+          <div className="title-row">
+            <span className="title-icon">
+              <Bot size={34} strokeWidth={2.2} />
+            </span>
+            <h1 className="card-title">AI Document Q&A</h1>
+          </div>
+          <p className="card-subtitle">
+            Upload a document and ask questions about its content.
+          </p>
+        </header>
 
-      <main>
-        <Hero />
+        {/* 2. Document Upload Row */}
+        <section className="upload-row">
+          <div className="choose-file-wrap">
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept=".pdf,.txt,application/pdf,text/plain"
+              onChange={handleFileChange}
+            />
 
-        <div className="workspace-grid" id="workspace">
-          <DocumentPanel
-            file={file}
-            dragging={dragging}
-            setDragging={setDragging}
-            pickFile={pickFile}
-            upload={upload}
-            uploading={uploading}
-            uploaded={uploaded}
-            removeDoc={removeDoc}
-            inputRef={inputRef}
-            isQuerying={loading}
+            <button
+              type="button"
+              className="btn-choose"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FileText size={16} strokeWidth={2.2} />
+              <span>Choose Document</span>
+            </button>
+
+            <span className={`file-name-label ${file ? "selected" : ""}`}>
+              {file ? (
+                <>
+                  {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                  {uploaded ? (
+                    <span className="status-tag indexed">Indexed ✓</span>
+                  ) : (
+                    <span className="status-tag ready">Ready to upload</span>
+                  )}
+                </>
+              ) : (
+                "No file selected"
+              )}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="btn-upload"
+            onClick={handleUpload}
+            disabled={!file || uploading || uploaded}
+          >
+            {uploading ? (
+              <>
+                <span className="spinner" />
+                <span>Uploading…</span>
+              </>
+            ) : uploaded ? (
+              <>
+                <CheckCircle2 size={16} strokeWidth={2.2} />
+                <span>Uploaded</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud size={16} strokeWidth={2.2} />
+                <span>Upload</span>
+              </>
+            )}
+          </button>
+        </section>
+
+        {/* 3. Question Row */}
+        <form className="question-row" onSubmit={handleAsk}>
+          <input
+            type="text"
+            className="question-input"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask your question here..."
+            disabled={asking}
           />
 
-          <ChatPanel
-            messages={messages}
-            loading={loading}
-            question={question}
-            setQuestion={setQuestion}
-            ask={ask}
-            file={file}
-            uploaded={uploaded}
-            onResetChat={resetChat}
-          />
-        </div>
+          <button
+            type="submit"
+            className="btn-ask"
+            disabled={!question.trim() || asking}
+          >
+            <Send size={15} strokeWidth={2.4} />
+            <span>Ask</span>
+          </button>
+        </form>
 
-        <FeatureStrip />
+        {/* 4. Answer Section */}
+        <section className="answer-panel">
+          <div className="answer-header">
+            <div className="answer-title-group">
+              <Lightbulb size={20} className="bulb-icon" strokeWidth={2.2} />
+              <span>Answer</span>
+            </div>
+
+            {answer && (
+              <button
+                type="button"
+                onClick={handleClear}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--text-dim)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontSize: "0.78rem"
+                }}
+                title="Clear answer"
+              >
+                <RotateCcw size={13} />
+                <span>Clear</span>
+              </button>
+            )}
+          </div>
+
+          <div className="answer-divider" />
+
+          <div className="answer-body">
+            {asking ? (
+              <div className="loading-box">
+                <span className="spinner" />
+                <span>Thinking and searching document context…</span>
+              </div>
+            ) : answer ? (
+              <>
+                <div className="answer-text">{answer}</div>
+
+                {sources && sources.length > 0 && (
+                  <div className="sources-box">
+                    <span className="sources-label">Sources:</span>
+                    <ul className="sources-list">
+                      {sources.map((s, idx) => {
+                        let text = typeof s === "string" ? s : s.page ? `Page ${s.page}` : JSON.stringify(s);
+                        return <li key={idx}>{text}</li>;
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="placeholder-text">Your answer will appear here...</p>
+            )}
+          </div>
+        </section>
       </main>
-
-      <Footer />
     </div>
   );
 }
-
-export default App;
