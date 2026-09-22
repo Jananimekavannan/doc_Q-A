@@ -124,165 +124,165 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* 🤖 Animated Robot Mascot holding the card */}
-      <AnimatedBot state={getBotState()} />
+      {/* 🤖 Animated Robot Mascot holding the card from Top, Left, Right & Bottom */}
+      <AnimatedBot state={getBotState()}>
+        <main className="qa-card">
+          {/* 1. Header */}
+          <header className="card-header">
+            <div className="title-row">
+              <span className="title-icon">
+                <Bot size={34} strokeWidth={2.2} />
+              </span>
+              <h1 className="card-title">AI Document Q&A</h1>
+            </div>
+            <p className="card-subtitle">
+              Upload a document and ask questions about its content.
+            </p>
+          </header>
 
-      <main className="qa-card">
-        {/* 1. Header */}
-        <header className="card-header">
-          <div className="title-row">
-            <span className="title-icon">
-              <Bot size={34} strokeWidth={2.2} />
-            </span>
-            <h1 className="card-title">AI Document Q&A</h1>
-          </div>
-          <p className="card-subtitle">
-            Upload a document and ask questions about its content.
-          </p>
-        </header>
+          {/* 2. Document Upload Row */}
+          <section className="upload-row">
+            <div className="choose-file-wrap">
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                accept=".pdf,.txt,application/pdf,text/plain"
+                onChange={handleFileChange}
+              />
 
-        {/* 2. Document Upload Row */}
-        <section className="upload-row">
-          <div className="choose-file-wrap">
-            <input
-              ref={fileInputRef}
-              type="file"
-              hidden
-              accept=".pdf,.txt,application/pdf,text/plain"
-              onChange={handleFileChange}
-            />
+              <button
+                type="button"
+                className="btn-choose"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FileText size={16} strokeWidth={2.2} />
+                <span>Choose Document</span>
+              </button>
+
+              <span className={`file-name-label ${file ? "selected" : ""}`}>
+                {file ? (
+                  <>
+                    {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                    {uploaded ? (
+                      <span className="status-tag indexed">Indexed ✓</span>
+                    ) : (
+                      <span className="status-tag ready">Ready to upload</span>
+                    )}
+                  </>
+                ) : (
+                  "No file selected"
+                )}
+              </span>
+            </div>
 
             <button
               type="button"
-              className="btn-choose"
-              onClick={() => fileInputRef.current?.click()}
+              className="btn-upload"
+              onClick={handleUpload}
+              disabled={!file || uploading || uploaded}
             >
-              <FileText size={16} strokeWidth={2.2} />
-              <span>Choose Document</span>
-            </button>
-
-            <span className={`file-name-label ${file ? "selected" : ""}`}>
-              {file ? (
+              {uploading ? (
                 <>
-                  {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  {uploaded ? (
-                    <span className="status-tag indexed">Indexed ✓</span>
-                  ) : (
-                    <span className="status-tag ready">Ready to upload</span>
+                  <span className="spinner" />
+                  <span>Uploading…</span>
+                </>
+              ) : uploaded ? (
+                <>
+                  <CheckCircle2 size={16} strokeWidth={2.2} />
+                  <span>Uploaded</span>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={16} strokeWidth={2.2} />
+                  <span>Upload</span>
+                </>
+              )}
+            </button>
+          </section>
+
+          {/* 3. Question Row */}
+          <form className="question-row" onSubmit={handleAsk}>
+            <input
+              type="text"
+              className="question-input"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Ask your question here..."
+              disabled={asking}
+            />
+
+            <button
+              type="submit"
+              className="btn-ask"
+              disabled={!question.trim() || asking}
+            >
+              <Send size={15} strokeWidth={2.4} />
+              <span>Ask</span>
+            </button>
+          </form>
+
+          {/* 4. Answer Section */}
+          <section className="answer-panel">
+            <div className="answer-header">
+              <div className="answer-title-group">
+                <Lightbulb size={20} className="bulb-icon" strokeWidth={2.2} />
+                <span>Answer</span>
+              </div>
+
+              {answer && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--text-dim)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "0.78rem"
+                  }}
+                  title="Clear answer"
+                >
+                  <RotateCcw size={13} />
+                  <span>Clear</span>
+                </button>
+              )}
+            </div>
+
+            <div className="answer-divider" />
+
+            <div className="answer-body">
+              {asking ? (
+                <div className="loading-box">
+                  <span className="spinner" />
+                  <span>Thinking and searching document context…</span>
+                </div>
+              ) : answer ? (
+                <>
+                  <div className="answer-text">{answer}</div>
+
+                  {sources && sources.length > 0 && (
+                    <div className="sources-box">
+                      <span className="sources-label">Sources:</span>
+                      <ul className="sources-list">
+                        {sources.map((s, idx) => {
+                          let text = typeof s === "string" ? s : s.page ? `Page ${s.page}` : JSON.stringify(s);
+                          return <li key={idx}>{text}</li>;
+                        })}
+                      </ul>
+                    </div>
                   )}
                 </>
               ) : (
-                "No file selected"
+                <p className="placeholder-text">Your answer will appear here...</p>
               )}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            className="btn-upload"
-            onClick={handleUpload}
-            disabled={!file || uploading || uploaded}
-          >
-            {uploading ? (
-              <>
-                <span className="spinner" />
-                <span>Uploading…</span>
-              </>
-            ) : uploaded ? (
-              <>
-                <CheckCircle2 size={16} strokeWidth={2.2} />
-                <span>Uploaded</span>
-              </>
-            ) : (
-              <>
-                <UploadCloud size={16} strokeWidth={2.2} />
-                <span>Upload</span>
-              </>
-            )}
-          </button>
-        </section>
-
-        {/* 3. Question Row */}
-        <form className="question-row" onSubmit={handleAsk}>
-          <input
-            type="text"
-            className="question-input"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask your question here..."
-            disabled={asking}
-          />
-
-          <button
-            type="submit"
-            className="btn-ask"
-            disabled={!question.trim() || asking}
-          >
-            <Send size={15} strokeWidth={2.4} />
-            <span>Ask</span>
-          </button>
-        </form>
-
-        {/* 4. Answer Section */}
-        <section className="answer-panel">
-          <div className="answer-header">
-            <div className="answer-title-group">
-              <Lightbulb size={20} className="bulb-icon" strokeWidth={2.2} />
-              <span>Answer</span>
             </div>
-
-            {answer && (
-              <button
-                type="button"
-                onClick={handleClear}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "var(--text-dim)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  fontSize: "0.78rem"
-                }}
-                title="Clear answer"
-              >
-                <RotateCcw size={13} />
-                <span>Clear</span>
-              </button>
-            )}
-          </div>
-
-          <div className="answer-divider" />
-
-          <div className="answer-body">
-            {asking ? (
-              <div className="loading-box">
-                <span className="spinner" />
-                <span>Thinking and searching document context…</span>
-              </div>
-            ) : answer ? (
-              <>
-                <div className="answer-text">{answer}</div>
-
-                {sources && sources.length > 0 && (
-                  <div className="sources-box">
-                    <span className="sources-label">Sources:</span>
-                    <ul className="sources-list">
-                      {sources.map((s, idx) => {
-                        let text = typeof s === "string" ? s : s.page ? `Page ${s.page}` : JSON.stringify(s);
-                        return <li key={idx}>{text}</li>;
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="placeholder-text">Your answer will appear here...</p>
-            )}
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </AnimatedBot>
     </div>
   );
 }

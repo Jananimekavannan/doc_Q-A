@@ -1,14 +1,15 @@
 /* ==========================================================================
-   DocuMind — AI Document Q&A with Animated Robot Mascot Holding the Card
+   DocuMind — AI Document Q&A with Full Animated Robot Holding the Center Box
+   (Head at Top, Hands gripping Left & Right, Legs & Thruster Boots at Bottom)
    ========================================================================== */
 
 :root {
   --bg-dark: #050B14;
   --bg-gradient-center: #0B192E;
-  --card-bg: rgba(10, 20, 36, 0.92);
-  --card-border: rgba(93, 225, 255, 0.18);
-  --panel-bg: rgba(6, 14, 25, 0.85);
-  --panel-border: rgba(148, 185, 235, 0.14);
+  --card-bg: rgba(10, 20, 36, 0.94);
+  --card-border: rgba(93, 225, 255, 0.2);
+  --panel-bg: rgba(6, 14, 25, 0.88);
+  --panel-border: rgba(148, 185, 235, 0.15);
 
   /* Accents */
   --blue-primary: #2563EB;
@@ -23,6 +24,12 @@
   --cyan-glow: rgba(56, 189, 248, 0.5);
   --yellow-bulb: #FACC15;
   --yellow-glow: rgba(250, 204, 21, 0.35);
+
+  /* Robot Metallic Colors */
+  --bot-metal-dark: #0F172A;
+  --bot-metal-mid: #1E293B;
+  --bot-metal-light: #334155;
+  --bot-joint: #475569;
 
   /* Text Colors */
   --text-white: #FFFFFF;
@@ -54,19 +61,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.25rem 2.5rem;
+  padding: 3.5rem 1.25rem 4rem;
   background: 
-    radial-gradient(circle at 50% 12%, rgba(37, 99, 235, 0.28) 0%, transparent 55%),
-    radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 85% 75%, rgba(56, 189, 248, 0.1) 0%, transparent 45%),
+    radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.3) 0%, transparent 60%),
+    radial-gradient(circle at 10% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 90% 85%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
     var(--bg-dark);
   background-attachment: fixed;
+  overflow-x: hidden;
 }
 
-/* App Wrapper for Perfect Centering */
+/* App Wrapper */
 .app-container {
   width: 100%;
-  max-width: 940px;
+  max-width: 960px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -74,26 +82,35 @@ body {
 }
 
 /* ==========================================================================
-   ANIMATED ROBOT BOT COMPONENT (HOLDING THE CARD)
+   ROBOT HOLDING WRAPPER (Full Character assembly)
    ========================================================================== */
-.bot-container {
+.robot-holding-wrapper {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  z-index: 10;
-  margin-bottom: -22px; /* Pulls down so hands grip the card top */
-  pointer-events: none;
-  animation: botFloat 4s ease-in-out infinite;
+  animation: fullBotFloat 4.5s ease-in-out infinite;
 }
 
-@keyframes botFloat {
+@keyframes fullBotFloat {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-9px);
   }
+}
+
+/* ==========================================================================
+   1. BOT TOP: Speech Bubble + Head & Antenna
+   ========================================================================== */
+.bot-top-anchor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+  margin-bottom: -18px; /* Tucks behind the top of the card */
 }
 
 /* Holographic Speech / Status Pill */
@@ -101,15 +118,14 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.9rem;
-  background: rgba(10, 25, 48, 0.88);
+  padding: 0.35rem 0.95rem;
+  background: rgba(10, 25, 48, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 9999px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.25);
   backdrop-filter: blur(12px);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.65rem;
   transition: all 0.3s ease;
-  pointer-events: auto;
 }
 
 .bot-status-dot {
@@ -121,17 +137,17 @@ body {
   animation: pulseDot 1.5s infinite;
 }
 
-.bot-container.uploading .bot-status-dot {
+.robot-holding-wrapper.uploading .bot-status-dot {
   background: #34D399;
   box-shadow: 0 0 10px #34D399;
 }
 
-.bot-container.thinking .bot-status-dot {
+.robot-holding-wrapper.thinking .bot-status-dot {
   background: #FBBF24;
   box-shadow: 0 0 10px #FBBF24;
 }
 
-.bot-container.answered .bot-status-dot {
+.robot-holding-wrapper.answered .bot-status-dot {
   background: #60A5FA;
   box-shadow: 0 0 10px #60A5FA;
 }
@@ -148,13 +164,12 @@ body {
   50% { transform: scale(1.3); opacity: 0.6; }
 }
 
-/* Bot Avatar */
-.bot-avatar {
+/* Head Assembly */
+.bot-head-assembly {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  z-index: 2;
 }
 
 /* Antenna */
@@ -201,21 +216,21 @@ body {
 
 .antenna-rod {
   width: 4px;
-  height: 14px;
+  height: 15px;
   background: linear-gradient(180deg, #64748B 0%, #334155 100%);
   border-radius: 2px;
 }
 
-/* Bot Head */
+/* Bot Head Chassis */
 .bot-head {
-  width: 110px;
-  height: 72px;
-  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  width: 120px;
+  height: 76px;
+  background: linear-gradient(180deg, var(--bot-metal-mid) 0%, var(--bot-metal-dark) 100%);
   border: 2px solid rgba(148, 185, 235, 0.35);
   border-radius: 28px;
   box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.6),
-    0 0 25px rgba(56, 189, 248, 0.2),
+    0 10px 30px rgba(0, 0, 0, 0.7),
+    0 0 25px rgba(56, 189, 248, 0.25),
     inset 0 2px 4px rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
@@ -227,10 +242,9 @@ body {
 /* Ear Pods */
 .bot-ear {
   position: absolute;
-  width: 8px;
-  height: 24px;
-  background: #334155;
-  border-radius: 4px;
+  width: 9px;
+  height: 26px;
+  background: var(--bot-metal-light);
   top: 50%;
   transform: translateY(-50%);
   border: 1px solid rgba(148, 185, 235, 0.3);
@@ -240,18 +254,18 @@ body {
 }
 
 .bot-ear.left {
-  left: -8px;
+  left: -9px;
   border-radius: 6px 0 0 6px;
 }
 
 .bot-ear.right {
-  right: -8px;
+  right: -9px;
   border-radius: 0 6px 6px 0;
 }
 
 .ear-light {
   width: 3px;
-  height: 12px;
+  height: 14px;
   border-radius: 2px;
   background: var(--cyan-accent);
   box-shadow: 0 0 6px var(--cyan-accent);
@@ -259,12 +273,12 @@ body {
 
 /* Face Visor Screen */
 .bot-face {
-  width: 84px;
-  height: 48px;
+  width: 92px;
+  height: 52px;
   background: #020617;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 18px;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9), 0 0 10px rgba(56, 189, 248, 0.15);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.95), 0 0 10px rgba(56, 189, 248, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -277,9 +291,9 @@ body {
   position: absolute;
   top: -8px;
   left: 6px;
-  width: 70px;
-  height: 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  width: 76px;
+  height: 22px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 60%);
   border-radius: 50%;
   transform: rotate(-12deg);
   pointer-events: none;
@@ -289,13 +303,13 @@ body {
 .bot-eyes {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   margin-top: 2px;
 }
 
 .eye {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--cyan-accent);
   box-shadow: 0 0 12px var(--cyan-accent), 0 0 20px rgba(56, 189, 248, 0.7);
@@ -333,8 +347,8 @@ body {
   }
 }
 
-/* Special eye expressions depending on state */
-.bot-container.thinking .eye {
+/* Dynamic Eye States */
+.robot-holding-wrapper.thinking .eye {
   background: #FBBF24;
   box-shadow: 0 0 14px #FBBF24;
   animation: eyeThink 0.8s linear infinite;
@@ -346,14 +360,14 @@ body {
   100% { transform: rotate(360deg) scale(0.9); }
 }
 
-.bot-container.uploading .eye {
+.robot-holding-wrapper.uploading .eye {
   background: #34D399;
   box-shadow: 0 0 14px #34D399;
   border-radius: 4px;
   height: 6px;
 }
 
-.bot-container.answered .eye {
+.robot-holding-wrapper.answered .eye {
   border-radius: 50% 50% 0 0;
   height: 9px;
   box-shadow: 0 0 14px #38BDF8;
@@ -364,7 +378,7 @@ body {
   display: flex;
   align-items: center;
   gap: 3px;
-  margin-top: 4px;
+  margin-top: 5px;
   height: 8px;
 }
 
@@ -373,7 +387,7 @@ body {
   height: 3px;
   background: var(--cyan-accent);
   border-radius: 2px;
-  opacity: 0.8;
+  opacity: 0.85;
   animation: waveDance 1.2s ease-in-out infinite;
 }
 
@@ -390,210 +404,179 @@ body {
 
 /* Bot Neck */
 .bot-neck {
-  width: 32px;
-  height: 8px;
-  background: #1E293B;
+  width: 44px;
+  height: 14px;
+  background: var(--bot-metal-dark);
   border: 1px solid rgba(148, 185, 235, 0.2);
-  margin-top: -2px;
-  border-radius: 3px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: -3px;
 }
 
 .neck-joint {
-  width: 14px;
-  height: 3px;
-  background: var(--cyan-accent);
-  opacity: 0.7;
-}
-
-/* Bot Torso */
-.bot-torso {
-  width: 60px;
-  height: 20px;
-  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
-  border: 1px solid rgba(148, 185, 235, 0.25);
-  border-radius: 8px 8px 12px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-}
-
-.chest-plate {
   width: 22px;
-  height: 10px;
-  background: #0B132B;
-  border-radius: 4px;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chest-core {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  height: 4px;
   background: var(--cyan-accent);
-  box-shadow: 0 0 8px var(--cyan-accent);
-  animation: coreGlow 2s infinite alternate;
-}
-
-@keyframes coreGlow {
-  from { opacity: 0.5; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px var(--cyan-accent); }
+  box-shadow: 0 0 6px var(--cyan-accent);
+  border-radius: 2px;
 }
 
 /* ==========================================================================
-   ROBOT ARMS & GRIPPING HANDS HOLDING THE CENTER CARD
+   2. BOT SIDES: Arms & Hands Gripping the Card on Left & Right
    ========================================================================== */
-.bot-arms-wrapper {
+.bot-side-arm {
   position: absolute;
-  top: 52px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 320px; /* Spans across the top of the card */
-  height: 80px;
-  pointer-events: none;
+  top: 170px;
   z-index: 12;
-}
-
-.bot-arm {
-  position: absolute;
-  top: 0;
-  display: flex;
-  align-items: flex-start;
-}
-
-.bot-arm.left-arm {
-  left: 0;
-  transform: rotate(-10deg);
-}
-
-.bot-arm.right-arm {
-  right: 0;
-  transform: rotate(10deg);
-}
-
-/* Shoulders */
-.shoulder-joint {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #334155;
-  border: 1.5px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-}
-
-/* Arm Segments */
-.upper-arm {
-  width: 38px;
-  height: 8px;
-  background: linear-gradient(90deg, #1E293B 0%, #334155 100%);
-  border-radius: 4px;
-  margin-top: 3px;
-  border: 1px solid rgba(148, 185, 235, 0.2);
-}
-
-.left-arm .upper-arm {
-  transform: rotate(-25deg);
-  margin-left: -2px;
-}
-
-.right-arm .upper-arm {
-  transform: rotate(25deg);
-  margin-right: -2px;
-  order: -1;
-}
-
-.elbow-joint {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #0F172A;
-  border: 1.5px solid var(--cyan-accent);
-  box-shadow: 0 0 6px var(--cyan-accent);
-  margin-top: 14px;
-}
-
-.forearm {
-  width: 44px;
-  height: 8px;
-  background: linear-gradient(90deg, #334155 0%, #1E293B 100%);
-  border-radius: 4px;
-  border: 1px solid rgba(148, 185, 235, 0.25);
-  margin-top: 18px;
-}
-
-.left-arm .forearm {
-  transform: rotate(42deg);
-  margin-left: -5px;
-}
-
-.right-arm .forearm {
-  transform: rotate(-42deg);
-  margin-right: -5px;
-  order: -2;
-}
-
-/* Robotic Gripping Hands */
-.bot-hand {
-  position: absolute;
-  top: 36px;
-  width: 32px;
-  height: 24px;
-  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
-  border: 1.5px solid rgba(56, 189, 248, 0.5);
-  border-radius: 8px;
-  box-shadow: 
-    0 6px 16px rgba(0, 0, 0, 0.7),
-    0 0 15px rgba(56, 189, 248, 0.35);
+  pointer-events: none;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  padding: 3px;
-  z-index: 15;
+  align-items: center;
 }
 
-.left-hand {
-  left: 58px;
+.bot-side-arm.left-arm-grip {
+  left: -22px;
+}
+
+.bot-side-arm.right-arm-grip {
+  right: -22px;
+}
+
+/* Shoulder joint */
+.arm-shoulder {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #475569, #0F172A);
+  border: 2px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 8px rgba(56, 189, 248, 0.2);
+}
+
+/* Bicep segment */
+.arm-bicep {
+  width: 12px;
+  height: 46px;
+  background: linear-gradient(180deg, #334155 0%, #1E293B 100%);
+  border: 1px solid rgba(148, 185, 235, 0.25);
+  border-radius: 6px;
+  margin-top: -4px;
+}
+
+/* Elbow joint */
+.arm-elbow {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0F172A;
+  border: 2px solid var(--cyan-accent);
+  box-shadow: 0 0 8px var(--cyan-accent);
+  margin-top: -4px;
+}
+
+/* Forearm reaching inward toward the card edge */
+.arm-forearm {
+  width: 14px;
+  height: 52px;
+  background: linear-gradient(180deg, #1E293B 0%, #334155 100%);
+  border: 1px solid rgba(148, 185, 235, 0.25);
+  border-radius: 6px;
+  margin-top: -4px;
+}
+
+.left-arm-grip .arm-forearm {
   transform: rotate(18deg);
+  margin-left: 10px;
 }
 
-.right-hand {
-  right: 58px;
+.right-arm-grip .arm-forearm {
   transform: rotate(-18deg);
+  margin-right: 10px;
 }
 
-/* Mechanical Clamp Fingers gripping the card border */
-.finger {
-  height: 4px;
-  background: linear-gradient(90deg, #475569, #94A3B8);
-  border-radius: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+/* Mechanical Gripping Hand clutching the card edge */
+.grip-hand {
+  position: relative;
+  width: 38px;
+  height: 48px;
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  border: 2px solid rgba(56, 189, 248, 0.6);
+  border-radius: 10px;
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(56, 189, 248, 0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 5px 6px;
+  margin-top: -8px;
 }
 
-.f-thumb { width: 14px; }
-.f-index { width: 22px; }
-.f-middle { width: 18px; }
+.left-arm-grip .grip-hand {
+  margin-left: 20px;
+  transform: rotate(12deg);
+}
 
-.palm-glow {
+.right-arm-grip .grip-hand {
+  margin-right: 20px;
+  transform: rotate(-12deg);
+}
+
+/* Clamp fingers wrapping over the card border */
+.grip-finger {
+  height: 5px;
+  background: linear-gradient(90deg, #64748B, #CBD5E1);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.grip-finger.f1 { width: 100%; }
+.grip-finger.f2 { width: 90%; }
+.grip-finger.f3 { width: 80%; }
+
+.grip-thumb {
+  position: absolute;
+  top: 14px;
+  width: 14px;
+  height: 6px;
+  background: linear-gradient(90deg, var(--cyan-accent), #FFFFFF);
+  border-radius: 3px;
+  box-shadow: 0 0 6px var(--cyan-accent);
+}
+
+.left-arm-grip .grip-thumb {
+  right: -5px;
+  transform: rotate(-30deg);
+}
+
+.right-arm-grip .grip-thumb {
+  left: -5px;
+  transform: rotate(30deg);
+}
+
+.grip-glow {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--cyan-accent);
-  box-shadow: 0 0 8px var(--cyan-accent);
+  box-shadow: 0 0 10px var(--cyan-accent);
 }
 
 /* ==========================================================================
-   MAIN CENTERED CARD (HELD BY THE ROBOT)
+   3. HELD BOX CONTAINER (Main Q&A Card)
    ========================================================================== */
+.held-box-container {
+  width: 100%;
+  position: relative;
+  z-index: 5;
+}
+
 .qa-card {
   width: 100%;
   background: var(--card-bg);
@@ -601,23 +584,159 @@ body {
   border-radius: 22px;
   padding: 2.75rem 2.75rem 2.5rem;
   box-shadow: 
-    0 30px 70px -12px rgba(0, 0, 0, 0.8),
-    0 0 50px rgba(56, 189, 248, 0.12);
+    0 30px 70px -12px rgba(0, 0, 0, 0.85),
+    0 0 50px rgba(56, 189, 248, 0.14);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
   position: relative;
-  z-index: 5;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .qa-card:hover {
-  border-color: rgba(93, 225, 255, 0.3);
+  border-color: rgba(93, 225, 255, 0.32);
   box-shadow: 
-    0 35px 80px -10px rgba(0, 0, 0, 0.85),
-    0 0 60px rgba(56, 189, 248, 0.2);
+    0 35px 80px -10px rgba(0, 0, 0, 0.9),
+    0 0 60px rgba(56, 189, 248, 0.22);
+}
+
+/* ==========================================================================
+   4. BOT BOTTOM: Legs & Hovering Thruster Boots
+   ========================================================================== */
+.bot-bottom-legs {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  width: 65%;
+  max-width: 580px;
+  z-index: 2;
+  margin-top: -18px; /* Tucks seamlessly under the card bottom */
+  position: relative;
+}
+
+/* Center Pelvis Unit */
+.bot-pelvis {
+  width: 54px;
+  height: 22px;
+  background: linear-gradient(180deg, var(--bot-metal-mid) 0%, var(--bot-metal-dark) 100%);
+  border: 1px solid rgba(148, 185, 235, 0.3);
+  border-radius: 0 0 14px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+}
+
+.pelvis-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan-accent);
+  box-shadow: 0 0 8px var(--cyan-accent);
+  animation: pulseDot 2s infinite;
+}
+
+/* Leg Columns */
+.bot-leg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Hip joint */
+.leg-hip {
+  width: 22px;
+  height: 18px;
+  background: radial-gradient(circle at 35% 35%, #475569, #0F172A);
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  border-radius: 0 0 8px 8px;
+}
+
+/* Thigh */
+.leg-thigh {
+  width: 18px;
+  height: 38px;
+  background: linear-gradient(180deg, #1E293B 0%, #334155 100%);
+  border: 1px solid rgba(148, 185, 235, 0.25);
+  border-radius: 6px;
+  margin-top: -2px;
+}
+
+/* Knee joint */
+.leg-knee {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0F172A;
+  border: 2px solid var(--cyan-accent);
+  box-shadow: 0 0 8px var(--cyan-accent);
+  margin-top: -4px;
+  z-index: 3;
+}
+
+/* Calf */
+.leg-calf {
+  width: 22px;
+  height: 42px;
+  background: linear-gradient(180deg, #334155 0%, #0F172A 100%);
+  border: 1px solid rgba(148, 185, 235, 0.3);
+  border-radius: 6px 6px 10px 10px;
+  margin-top: -4px;
+}
+
+/* Futuristic Boot / Foot */
+.bot-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -3px;
+}
+
+.boot-chassis {
+  width: 48px;
+  height: 20px;
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: 8px 8px 12px 12px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
+}
+
+.boot-sole {
+  width: 36px;
+  height: 6px;
+  background: #020617;
+  border: 1px solid var(--cyan-accent);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 0 8px var(--cyan-accent);
+  margin-top: -1px;
+}
+
+/* Thruster Plume flame effect under the boots */
+.thruster-plume {
+  width: 18px;
+  height: 28px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #38BDF8 40%, rgba(56, 189, 248, 0) 100%);
+  border-radius: 50% 50% 20% 20%;
+  filter: blur(1px);
+  margin-top: 2px;
+  animation: thrusterFlame 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes thrusterFlame {
+  0% {
+    height: 22px;
+    opacity: 0.7;
+    transform: scaleX(0.85);
+  }
+  100% {
+    height: 36px;
+    opacity: 1;
+    transform: scaleX(1.15);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+  }
 }
 
 /* ==========================================================================
@@ -669,7 +788,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgba(4, 10, 19, 0.5);
+  background: rgba(4, 10, 19, 0.55);
   padding: 0.65rem 0.85rem;
   border-radius: 14px;
   border: 1px solid var(--panel-border);
@@ -793,7 +912,7 @@ body {
 .question-input {
   flex: 1;
   min-width: 0;
-  background: rgba(4, 10, 20, 0.9);
+  background: rgba(4, 10, 20, 0.92);
   border: 1px solid var(--panel-border);
   border-radius: 12px;
   padding: 0.85rem 1.25rem;
@@ -986,27 +1105,32 @@ body {
 /* ==========================================================================
    RESPONSIVE LAYOUT
    ========================================================================== */
+@media (max-width: 1040px) {
+  .bot-side-arm.left-arm-grip {
+    left: -12px;
+  }
+  .bot-side-arm.right-arm-grip {
+    right: -12px;
+  }
+}
+
 @media (max-width: 768px) {
   body {
-    padding: 1.5rem 0.75rem;
+    padding: 2rem 0.75rem 3rem;
     align-items: flex-start;
   }
 
-  .bot-arms-wrapper {
-    width: 260px;
+  .bot-side-arm {
+    display: none; /* Hide side arms on small mobile screens to prevent overflow */
   }
 
-  .bot-hand.left-hand {
-    left: 42px;
-  }
-
-  .bot-hand.right-hand {
-    right: 42px;
+  .bot-bottom-legs {
+    width: 80%;
   }
 
   .qa-card {
     padding: 1.75rem 1.25rem 1.5rem;
-    border-radius: 16px;
+    border-radius: 18px;
     gap: 1.35rem;
   }
 
