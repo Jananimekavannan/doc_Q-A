@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Bot, FileText, UploadCloud, Lightbulb, Send, CheckCircle2, RotateCcw } from "lucide-react";
+import { FileText, UploadCloud, Lightbulb, Send, CheckCircle2, RotateCcw } from "lucide-react";
 import AnimatedBot from "./components/AnimatedBot";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -130,12 +130,7 @@ export default function App() {
         <main className="qa-card">
           {/* 1. Header */}
           <header className="card-header">
-            <div className="title-row">
-              <span className="title-icon">
-                <Bot size={34} strokeWidth={2.2} />
-              </span>
-              <h1 className="card-title">AI Document Q&A</h1>
-            </div>
+            <h1 className="card-title">AI Document Q&A</h1>
             <p className="card-subtitle">
               Upload a document and ask questions about its content.
             </p>
