@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Bot, FileText, UploadCloud, Lightbulb, Send, CheckCircle2, RotateCcw } from "lucide-react";
+import AnimatedBot from "./components/AnimatedBot";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -14,6 +15,14 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const fileInputRef = useRef(null);
+
+  // Compute dynamic robot state
+  const getBotState = () => {
+    if (uploading) return "uploading";
+    if (asking) return "thinking";
+    if (answer) return "answered";
+    return "idle";
+  };
 
   // File selection
   const handleFileChange = (e) => {
@@ -115,6 +124,9 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* 🤖 Animated Robot Mascot holding the card */}
+      <AnimatedBot state={getBotState()} />
+
       <main className="qa-card">
         {/* 1. Header */}
         <header className="card-header">
