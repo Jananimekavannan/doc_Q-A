@@ -3,19 +3,6 @@ import React from "react";
 export default function AnimatedBot({ state = "idle" }) {
   // state: 'idle' | 'uploading' | 'thinking' | 'answered'
 
-  const getStatusText = () => {
-    switch (state) {
-      case "uploading":
-        return "Scanning document...";
-      case "thinking":
-        return "Reasoning & retrieving...";
-      case "answered":
-        return "Answer ready!";
-      default:
-        return "DocuMind AI Ready";
-    }
-  };
-
   const getEyeColor = () => {
     switch (state) {
       case "uploading":
@@ -33,12 +20,6 @@ export default function AnimatedBot({ state = "idle" }) {
 
   return (
     <div className={`side-robot-wrapper ${state}`}>
-      {/* Robot Speech Bubble */}
-      <div className="bot-side-speech">
-        <span className="speech-dot" style={{ background: eyeColor, boxShadow: `0 0 8px ${eyeColor}` }} />
-        <span className="speech-text">{getStatusText()}</span>
-      </div>
-
       {/* Vector Illustration of the Exact Robot from the Reference Image */}
       <svg
         className="robot-svg"
