@@ -43,7 +43,8 @@ def extract_text_from_txt(file_path: Union[str, Path], filename: str = "") -> Ex
     return ExtractedDocument(
         filename=doc_name,
         pages=1,
-        text=text.strip()
+        text=text.strip(),
+        pages_data=[{"page": 1, "text": text.strip()}]
     )
 
 
@@ -56,7 +57,7 @@ def extract_text_from_pdf(file_path: Union[str, Path], filename: str = "") -> Ex
         filename: Optional display name for the document.
 
     Returns:
-        ExtractedDocument containing filename, total page count, and combined text.
+        ExtractedDocument containing filename, total page count, combined text, and per-page entries.
     """
     path = Path(file_path)
     doc_name = filename or path.name
@@ -67,18 +68,22 @@ def extract_text_from_pdf(file_path: Union[str, Path], filename: str = "") -> Ex
     reader = PdfReader(str(path))
     pages_count = len(reader.pages)
     page_texts = []
+    pages_data = []
 
     for i, page in enumerate(reader.pages):
-        page_text = page.extract_text()
+        page_num = i + 1
+        page_text = (page.extract_text() or "").strip()
         if page_text:
-            page_texts.append(page_text.strip())
+            page_texts.append(page_text)
+            pages_data.append({"page": page_num, "text": page_text})
 
     full_text = "\n\n".join(page_texts)
 
     return ExtractedDocument(
         filename=doc_name,
         pages=pages_count,
-        text=full_text
+        text=full_text,
+        pages_data=pages_data
     )
 
 

@@ -33,12 +33,15 @@ async def ask_question(request: QuestionRequest):
         )
 
     try:
-        response = answer_question(request.question.strip())
+        response = answer_question(
+            question=request.question.strip(),
+            filename=request.filename
+        )
         return response
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while generating the answer."
+            detail=f"An unexpected error occurred while generating the answer: {str(e)}"
         )

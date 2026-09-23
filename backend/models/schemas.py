@@ -46,13 +46,15 @@ class ExtractedDocument(BaseModel):
     filename: str = Field(..., description="Name of the parsed document")
     pages: int = Field(..., description="Total number of pages in the document (1 for TXT)")
     text: str = Field(..., description="Complete extracted text from the document")
+    pages_data: Optional[List[dict]] = Field(default=None, description="List of per-page extracted data dictionaries")
 
     model_config = {
         "json_schema_extra": {
             "example": {
                 "filename": "document.pdf",
                 "pages": 5,
-                "text": "Extracted document content..."
+                "text": "Extracted document content...",
+                "pages_data": [{"page": 1, "text": "Page 1 content..."}]
             }
         }
     }
@@ -60,12 +62,14 @@ class ExtractedDocument(BaseModel):
 
 class Source(BaseModel):
     """Model representing a reference source for Q&A answers."""
+    filename: Optional[str] = Field(default=None, description="Document filename")
     page: Optional[int] = Field(default=None, description="Page number of the source chunk (if applicable)")
     text: str = Field(..., description="Relevant passage text snippet from the document")
 
     model_config = {
         "json_schema_extra": {
             "example": {
+                "filename": "sample.pdf",
                 "page": 1,
                 "text": "DocuMind is an AI-powered document question and answer system."
             }
@@ -76,6 +80,7 @@ class Source(BaseModel):
 class QuestionRequest(BaseModel):
     """Request model for the /ask endpoint."""
     question: str = Field(..., description="The user question regarding uploaded documents")
+    filename: Optional[str] = Field(default=None, description="Optional document filename to isolate query to a specific document")
 
     @field_validator("question")
     @classmethod
@@ -87,7 +92,8 @@ class QuestionRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "question": "What is this document about?"
+                "question": "What is this document about?",
+                "filename": "sample.pdf"
             }
         }
     }
@@ -101,8 +107,14 @@ class QuestionResponse(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "answer": "RAG service not connected. Please connect embeddings and vector store to enable Q&A.",
-                "sources": []
+                "answer": "Machine learning is a field of artificial intelligence...",
+                "sources": [
+                    {
+                        "filename": "AI_notes.pdf",
+                        "page": 4,
+                        "text": "Machine learning is a subset of AI..."
+                    }
+                ]
             }
         }
     }

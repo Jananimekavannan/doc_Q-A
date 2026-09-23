@@ -2,3 +2,8 @@ node_modules
 dist
 .env
 .env.local
+chroma_db/
+backend/chroma_db/
+backend/uploads/*
+!backend/uploads/.gitkeep
+

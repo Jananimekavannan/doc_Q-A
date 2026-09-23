@@ -93,9 +93,9 @@ async def upload_document(file: UploadFile = File(...)):
     finally:
         await file.close()
 
-    # Validate that document content can be extracted cleanly
+    # Extract document content and trigger RAG ingestion pipeline
     try:
-        extract_document_text(destination_path, original_filename)
+        extracted = extract_document_text(destination_path, original_filename)
     except Exception as e:
         if destination_path.exists():
             destination_path.unlink()
@@ -104,8 +104,20 @@ async def upload_document(file: UploadFile = File(...)):
             detail=f"Failed to read document contents: {str(e)}"
         )
 
+    # Ingest document into vector store
+    try:
+        from services.rag_service import ingest_document
+        chunks_indexed = ingest_document(extracted)
+    except Exception as e:
+        if destination_path.exists():
+            destination_path.unlink()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to index document in vector store: {str(e)}"
+        )
+
     return DocumentResponse(
-        message="Document uploaded successfully",
+        message=f"Document uploaded and indexed successfully ({chunks_indexed} chunks)",
         filename=original_filename,
         file_type=file_type,
         size=total_size

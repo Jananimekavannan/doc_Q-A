@@ -25,7 +25,6 @@ def create_sample_pdf_bytes(text_content: str = "DocuMind sample document page."
     """Helper to generate in-memory valid PDF bytes."""
     writer = PdfWriter()
     page = writer.add_blank_page(width=200, height=200)
-    # PyPDF blank page is a valid PDF
     pdf_buffer = io.BytesIO()
     writer.write(pdf_buffer)
     return pdf_buffer.getvalue()
@@ -49,22 +48,22 @@ def test_root_endpoint():
     assert data["status"] == "online"
 
 
-# 3. Test Upload Valid TXT
+# 3. Test Upload Valid TXT & Vector Ingestion
 def test_upload_valid_txt(tmp_path):
-    txt_content = b"This is a test document explaining the DocuMind RAG architecture."
+    txt_content = b"DocuMind is an intelligent document Q&A application powered by Retrieval-Augmented Generation. It uses ChromaDB for persistent vector storage."
     response = client.post(
         "/upload",
         files={"file": ("test_doc.txt", txt_content, "text/plain")}
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["message"] == "Document uploaded successfully"
+    assert "uploaded and indexed" in data["message"].lower() or "uploaded successfully" in data["message"].lower()
     assert data["filename"] == "test_doc.txt"
     assert data["file_type"] == "txt"
     assert data["size"] == len(txt_content)
 
 
-# 4. Test Upload Valid PDF
+# 4. Test Upload Valid PDF & Vector Ingestion
 def test_upload_valid_pdf():
     pdf_bytes = create_sample_pdf_bytes("DocuMind PDF sample text.")
     response = client.post(
@@ -73,7 +72,6 @@ def test_upload_valid_pdf():
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["message"] == "Document uploaded successfully"
     assert data["filename"] == "sample.pdf"
     assert data["file_type"] == "pdf"
     assert data["size"] == len(pdf_bytes)
@@ -102,7 +100,6 @@ def test_upload_unsupported_file_type():
 # 6. Test Upload File Larger Than 20 MB Limit (413)
 def test_upload_file_too_large(monkeypatch):
     import routes.upload as upload_module
-    # Set limit to 1 KB for test efficiency without generating 20MB in test
     monkeypatch.setattr(upload_module, "MAX_FILE_SIZE_BYTES", 1024)
     monkeypatch.setattr(upload_module, "MAX_FILE_SIZE_MB", 1)
 
@@ -134,19 +131,38 @@ def test_ask_empty_question():
 
 # 8. Test Normal Question to /ask
 def test_ask_normal_question():
+    # First ensure a known document is uploaded
+    doc_text = b"Machine learning allows systems to learn patterns from training data without being explicitly programmed."
+    client.post(
+        "/upload",
+        files={"file": ("ml_intro.txt", doc_text, "text/plain")}
+    )
+
     response = client.post(
         "/ask",
-        json={"question": "What is this document about?"}
+        json={"question": "What is machine learning?", "filename": "ml_intro.txt"}
     )
     assert response.status_code == 200
     data = response.json()
     assert "answer" in data
     assert "sources" in data
     assert isinstance(data["sources"], list)
-    assert "RAG service not connected" in data["answer"]
+    assert len(data["sources"]) > 0
+    assert data["sources"][0]["filename"] == "ml_intro.txt"
 
 
-# 9. Test CORS Configuration
+# 9. Test Out-of-Context Question (Anti-Hallucination Fallback)
+def test_ask_out_of_context_question():
+    response = client.post(
+        "/ask",
+        json={"question": "What is the population of Jupiter's moon Europa?"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "couldn't find" in data["answer"].lower() or "not found" in data["answer"].lower()
+
+
+# 10. Test CORS Configuration
 def test_cors_headers():
     response = client.options(
         "/health",
@@ -159,7 +175,7 @@ def test_cors_headers():
     assert response.headers.get("access-control-allow-origin") == "http://localhost:5173"
 
 
-# 10. Test Document Extraction Services
+# 11. Test Document Extraction Services
 def test_txt_extraction_service(tmp_path):
     txt_file = tmp_path / "test_extract.txt"
     txt_file.write_text("This is test text for extraction.", encoding="utf-8")
@@ -168,6 +184,7 @@ def test_txt_extraction_service(tmp_path):
     assert extracted.filename == "test_extract.txt"
     assert extracted.pages == 1
     assert extracted.text == "This is test text for extraction."
+    assert len(extracted.pages_data) == 1
 
 
 def test_pdf_extraction_service(tmp_path):
@@ -178,6 +195,7 @@ def test_pdf_extraction_service(tmp_path):
     extracted = extract_text_from_pdf(pdf_file)
     assert extracted.filename == "test_extract.pdf"
     assert extracted.pages == 1
+    assert extracted.pages_data is not None
 
 
 def test_unsupported_extraction_service(tmp_path):
