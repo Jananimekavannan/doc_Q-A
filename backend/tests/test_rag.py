@@ -136,7 +136,12 @@ def test_qa_pipeline_hallucination_fallback(tmp_path):
 
     class MockEmbeddingService:
         def embed_query(self, q):
+            if "tokyo" in q.lower():
+                return [0.0, 0.0, 1.0] # completely orthogonal
             return [1.0, 0.0, 0.0]
+
+        def embed_texts(self, texts):
+            return [[1.0, 0.0, 0.0] for _ in texts]
 
     retriever = Retriever(
         embedding_service=MockEmbeddingService(),

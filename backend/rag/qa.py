@@ -1,11 +1,13 @@
 """
 Question-Answering pipeline module for DocuMind RAG.
-Combines retrieval, prompt construction, LLM inference, anti-hallucination verification,
-and citation structuring.
+Combines retrieval, prompt construction, LLM inference, semantic ranking,
+anti-hallucination verification, and citation structuring.
 """
 
 import os
+import re
 import logging
+import numpy as np
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
@@ -16,6 +18,7 @@ load_dotenv()
 logger = logging.getLogger("documind.rag.qa")
 
 DEFAULT_MODEL = "gpt-4o-mini"
+SEMANTIC_RELEVANCE_THRESHOLD = 0.25
 
 
 class QAPipeline:
@@ -28,29 +31,36 @@ class QAPipeline:
         model_name: Optional[str] = None
     ):
         self.retriever = retriever or get_retriever()
-        self.model_name = model_name or os.getenv("LLM_MODEL", os.getenv("OPENAI_MODEL", DEFAULT_MODEL))
-        self.api_key = os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY", ""))
-        self.base_url = os.getenv("LLM_BASE_URL", os.getenv("OPENAI_BASE_URL", None))
+        self._model_name = model_name
 
-    def _call_llm(self, user_prompt: str) -> str:
+    def _get_api_config(self):
+        """Reads LLM configuration dynamically from environment."""
+        load_dotenv()
+        api_key = os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
+        model_name = self._model_name or os.getenv("LLM_MODEL", os.getenv("OPENAI_MODEL", DEFAULT_MODEL)).strip()
+        base_url = os.getenv("LLM_BASE_URL", os.getenv("OPENAI_BASE_URL", None))
+        if base_url:
+            base_url = base_url.strip()
+        return api_key, model_name, base_url
+
+    def _call_llm(self, user_prompt: str, api_key: str, model_name: str, base_url: Optional[str]) -> str:
         """
         Invokes LLM with system instructions and user prompt.
         Supports OpenAI SDK or OpenAI-compatible endpoint.
         """
-        if not self.api_key:
-            logger.warning("No LLM_API_KEY or OPENAI_API_KEY configured.")
+        if not api_key:
             return ""
 
         try:
             from openai import OpenAI
             client = OpenAI(
-                api_key=self.api_key,
-                base_url=self.base_url if self.base_url else None
+                api_key=api_key,
+                base_url=base_url if base_url else None
             )
             
-            logger.info(f"Sending LLM request [model: {self.model_name}]...")
+            logger.info(f"Sending LLM request [model: {model_name}]...")
             response = client.chat.completions.create(
-                model=self.model_name,
+                model=model_name,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt}
@@ -65,47 +75,64 @@ class QAPipeline:
             logger.error(f"Error during LLM call: {e}")
             raise RuntimeError(f"LLM generation failed: {e}")
 
-    def _extractive_fallback_check(self, question: str, chunks: List[Dict[str, Any]]) -> Optional[str]:
+    def _extract_grounded_answer(self, question: str, chunks: List[Dict[str, Any]]) -> str:
         """
-        Fallback keyword/token alignment verification when running in offline/test mode
-        without an active LLM API key.
+        Synthesizes a grounded answer from retrieved chunks using semantic sentence embeddings
+        when running in local/offline mode without an active LLM API key.
         """
         if not chunks:
-            return None
-
-        # Simple semantic overlap check between question tokens and chunk content
-        import re
-        q_words = set(re.findall(r'\w+', question.lower()))
-        # Remove common stopwords
-        stopwords = {"what", "is", "the", "are", "of", "in", "and", "a", "an", "to", "for", "with", "on", "how", "why", "can", "does", "do", "about"}
-        keywords = q_words - stopwords
-
-        if not keywords:
-            return None
-
-        # Check if keywords appear across chunks
-        found_in_chunks = False
-        best_sentence = ""
-        for chunk in chunks:
-            text = chunk.get("text", "")
-            lower_text = text.lower()
-            matches = sum(1 for kw in keywords if kw in lower_text)
-            if matches >= max(1, len(keywords) // 2):
-                found_in_chunks = True
-                # Pick a relevant matching sentence
-                sentences = re.split(r'(?<=[.!?])\s+', text)
-                for s in sentences:
-                    if any(kw in s.lower() for kw in keywords):
-                        best_sentence = s.strip()
-                        break
-                if best_sentence:
-                    break
-
-        if found_in_chunks and best_sentence:
-            return best_sentence
-        elif not found_in_chunks:
             return NO_ANSWER_FALLBACK
-        return None
+
+        # 1. Extract all sentences from retrieved chunks
+        sentences: List[str] = []
+        for chunk in chunks:
+            text = chunk.get("text", "").strip()
+            if not text:
+                continue
+            split_items = [
+                s.strip() for s in re.split(r'(?<=[.!?])\s+|\n+', text)
+                if s.strip()
+            ]
+            for item in split_items:
+                if len(item) >= 3:
+                    sentences.append(item)
+            if not split_items and text:
+                sentences.append(text)
+
+        if not sentences:
+            return NO_ANSWER_FALLBACK
+
+        # 2. Embed sentences and query using sentence-transformers
+        embedding_service = self.retriever.embedding_service
+        q_emb = np.array(embedding_service.embed_query(question), dtype=np.float32)
+        s_embs = np.array(embedding_service.embed_texts(sentences), dtype=np.float32)
+
+        # 3. Compute cosine similarities
+        q_norm = np.linalg.norm(q_emb) + 1e-9
+        s_norms = np.linalg.norm(s_embs, axis=1) + 1e-9
+        similarities = np.dot(s_embs, q_emb) / (s_norms * q_norm)
+
+        best_idx = int(np.argmax(similarities))
+        best_score = float(similarities[best_idx])
+        logger.info(f"Offline semantic ranking: best sentence score = {best_score:.4f}")
+
+        # Check against anti-hallucination threshold
+        if best_score < SEMANTIC_RELEVANCE_THRESHOLD:
+            logger.info(f"Query '{question}' score ({best_score:.4f}) is below threshold ({SEMANTIC_RELEVANCE_THRESHOLD}).")
+            return NO_ANSWER_FALLBACK
+
+        # 4. Pick top relevant sentences (preserving original document flow)
+        score_cutoff = max(SEMANTIC_RELEVANCE_THRESHOLD, best_score * 0.70)
+        selected_indices = [
+            i for i, score in enumerate(similarities)
+            if score >= score_cutoff
+        ]
+        # Keep up to 3 most relevant sentences in document order
+        selected_indices = sorted(selected_indices, key=lambda i: similarities[i], reverse=True)[:3]
+        selected_indices.sort()
+
+        selected_sentences = [sentences[i] for i in selected_indices]
+        return " ".join(selected_sentences)
 
     def answer_question(
         self,
@@ -118,7 +145,7 @@ class QAPipeline:
         1. Embeds question and retrieves top_k chunks from vector store.
         2. If vector store is empty -> returns no documents message.
         3. If no chunks retrieved -> returns NO_ANSWER_FALLBACK.
-        4. Constructs grounded prompt and queries LLM.
+        4. Constructs grounded prompt and queries LLM (or uses semantic extractor).
         5. Formats answer and returns supporting source passages.
 
         Args:
@@ -144,7 +171,7 @@ class QAPipeline:
                 "sources": []
             }
 
-        # 1. Retrieve relevant chunks
+        # 1. Retrieve relevant chunks from ChromaDB
         chunks = self.retriever.retrieve(
             query=clean_question,
             top_k=top_k,
@@ -158,35 +185,31 @@ class QAPipeline:
                 "sources": []
             }
 
-        # 2. Format grounded user prompt
-        user_prompt = build_user_prompt(clean_question, chunks)
+        api_key, model_name, base_url = self._get_api_config()
 
-        # 3. Call LLM (or fallback if API key not present)
+        # 2. Call LLM if API key is provided, otherwise use semantic extractor
         answer = ""
-        if self.api_key:
+        if api_key:
             try:
-                answer = self._call_llm(user_prompt)
+                user_prompt = build_user_prompt(clean_question, chunks)
+                answer = self._call_llm(user_prompt, api_key, model_name, base_url)
             except Exception as e:
-                logger.error(f"LLM call failed: {e}")
-                answer = f"Error communicating with LLM service: {e}"
+                logger.error(f"LLM call failed: {e}. Falling back to semantic extraction.")
+                answer = self._extract_grounded_answer(clean_question, chunks)
         else:
-            # Offline / local fallback when testing without API key
-            logger.info("Running offline fallback logic (no API key configured).")
-            fallback_ans = self._extractive_fallback_check(clean_question, chunks)
-            if fallback_ans:
-                answer = fallback_ans
-            else:
-                answer = NO_ANSWER_FALLBACK
+            logger.info("No LLM API key detected; running semantic extraction.")
+            answer = self._extract_grounded_answer(clean_question, chunks)
 
-        # 4. Check for anti-hallucination fallback in LLM answer
+        # 3. Check for anti-hallucination fallback in answer
         is_fallback = (
-            NO_ANSWER_FALLBACK.lower() in answer.lower()
+            not answer
+            or NO_ANSWER_FALLBACK.lower() in answer.lower()
             or "could not be found in the uploaded document" in answer.lower()
             or "not found in the document" in answer.lower()
-            or "cannot find" in answer.lower() and "document" in answer.lower()
+            or ("cannot find" in answer.lower() and "document" in answer.lower())
         )
 
-        # 5. Format sources from retrieved chunks
+        # 4. Format sources from retrieved chunks
         sources = []
         if not is_fallback:
             for chunk in chunks:
@@ -199,7 +222,7 @@ class QAPipeline:
                 sources.append(source_item)
 
         return {
-            "answer": answer if answer else NO_ANSWER_FALLBACK,
+            "answer": answer if answer and not is_fallback else NO_ANSWER_FALLBACK,
             "sources": sources
         }
 
